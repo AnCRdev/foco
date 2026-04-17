@@ -19,8 +19,8 @@ function App() {
   };
 
   // Físicas tipo "Vercel" (Spring animations)
-  const springConfig = { type: "spring", stiffness: 400, damping: 25, mass: 1 };
-  const hardwareSpring = { type: "spring", stiffness: 500, damping: 15, mass: 0.5 };
+  const springConfig = { type: "spring", stiffness: 400, damping: 25, mass: 1 } as const;
+  const hardwareSpring = { type: "spring", stiffness: 500, damping: 15, mass: 0.5 } as const;
 
   return (
     <div className={`app-container ${isOn ? 'on' : 'off'}`}>
