@@ -64,7 +64,7 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  margin-top: -150px; /* Para levantarlo sin mover el layout absolute */
+  margin-top: -150px; 
   z-index: 10;
 }
 
@@ -77,18 +77,17 @@ body {
   margin-bottom: 20px;
 }
 
-/* Rosca Metálica (Base del foco dibujada en CSS) */
+/* Rosca Metálica */
 .bulb-container::before {
   content: '';
   width: 70px;
   height: 70px;
-  /* Simulación de reflejo de metal corrugado */
   background: 
     linear-gradient(90deg, #222 0%, #555 20%, #333 50%, #777 80%, #111 100%),
     repeating-linear-gradient(0deg, transparent, transparent 10px, rgba(0,0,0,0.6) 11px, rgba(0,0,0,0.6) 13px);
   background-blend-mode: overlay;
   border-radius: 5px 5px 0 0;
-  margin-bottom: -15px; /* Merge con el vidrio */
+  margin-bottom: -15px; 
   z-index: 2;
   box-shadow: inset 0 -5px 15px rgba(0,0,0,0.9);
 }
@@ -102,8 +101,6 @@ body {
   width: 220px;
   height: 220px;
   border-radius: 50%;
-  
-  /* Textura cristalina transparente con sombras internas profundas */
   background: radial-gradient(circle at 35% 35%, rgba(255,255,255,0.03) 0%, rgba(0,0,0,0.7) 100%);
   box-shadow: 
     inset 15px 15px 30px rgba(255,255,255,0.05), 
@@ -122,49 +119,42 @@ body {
     inset -20px -20px 50px rgba(234, 179, 8, 0.6);
 }
 
-/* SISTEMA DEL CORDÓN ARRASTRABLE (Pull cord) */
+/* SISTEMA DEL CORDÓN ARRASTRABLE */
 .cord-container {
   position: absolute;
-  top: 30px; /* Sale desde detrás de la rosca */
+  top: 30px; /* Sale desde detrás de la rosca metálica */
   right: -50px; /* A la derecha del foco */
-  height: 450px; /* Zócalo de arrastre. Si superas este margen con el ratón se rompe, así que es largo. */
+  height: 500px; /* Expandido para alojar columpios grandes hacia abajo y los lados */
   width: 100px;
   display: flex;
   justify-content: center;
-  z-index: 1; /* Por debajo de la base */
+  z-index: 1; /* Detrás del foco pero dibuja encima del background */
 }
 
-/* Contenedor físico de Framer Motion */
+/* Contenedor físico de la manilla */
 .pull-cord {
   display: flex;
   flex-direction: column;
   align-items: center;
-  /* Origin arriba para que el scaleY crezca hacia abajo estirándose */
-  transform-origin: top; 
-  padding-top: 20px;
   width: 100%;
-}
-
-.string {
-  width: 4px;
-  height: 240px;
-  background: linear-gradient(90deg, #6b7280 0%, #4b5563 50%, #6b7280 100%);
-  box-shadow: inset 1px 0px 2px rgba(255,255,255,0.2), 2px 5px 8px rgba(0,0,0,0.8);
-  border-radius: 2px;
+  margin-top: 240px; /* Posicionada en reposo, coordina con length=240 de VerletRope */
+  z-index: 10; /* La manija encima del canvas vectorial */
 }
 
 /* El gancho/manija realista */
 .handle {
   width: 28px;
   height: 48px;
-  background: linear-gradient(135deg, #ef4444 0%, #7f1d1d 100%); /* Plástico Rojo industrial */
+  background: linear-gradient(135deg, #ef4444 0%, #7f1d1d 100%); 
   border-radius: 14px 14px 24px 24px;
   box-shadow: 
     inset 5px 5px 12px rgba(255, 255, 255, 0.5),
     inset -5px -5px 12px rgba(0, 0, 0, 0.6),
     0 15px 20px rgba(0, 0, 0, 0.7);
-  margin-top: -5px; /* Se traslapa al cable */
-  z-index: 5;
+  cursor: grab;
+}
+.pull-cord:active .handle {
+  cursor: grabbing;
 }
 
 /* TEXTOS E INSTRUCCIONES */

@@ -1,17 +1,20 @@
 import { useState } from 'react';
-import { motion } from 'framer-motion';
+import { motion, useMotionValue } from 'framer-motion';
 import { Lightbulb } from 'lucide-react';
+import VerletRope from './VerletRope';
 import './index.css';
 
 function App() {
   const [isOn, setIsOn] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
 
-  // Activador físico que se llama cuando soltamos el cordón y baja más allá de cierto límite.
+  // Sensores de posición X,Y de alta velocidad que leen la mano del usuario para enviarlo a la soga matemática
+  const dragX = useMotionValue(0);
+  const dragY = useMotionValue(0);
+
   const toggleDevice = async () => {
     if (isConnecting) return;
     setIsConnecting(true);
-    
     setTimeout(() => {
       setIsOn(prev => !prev);
       setIsConnecting(false);
@@ -19,7 +22,6 @@ function App() {
   };
 
   const handleDragEnd = (_event: any, info: any) => {
-    // Si el usuario jaló la cuerda más de 60 pixeles hacia abajo:
     if (info.offset.y > 60) {
       toggleDevice();
     }
@@ -27,22 +29,17 @@ function App() {
 
   return (
     <div className={`app-container ${isOn ? 'on' : 'off'}`}>
-      {/* Luz ambiente radiante volumétrica */}
       <div className="ambient-glow" />
       
-      {/* SISTEMA COLGANTE */}
       <div className="hanging-system">
         
-        {/* Contenedor del Foco Realista */}
         <motion.div 
           className="bulb-container"
           animate={{
-             rotate: isOn ? [0, 2, -2, 0] : 0, // Pequeño temblor (chispa de poder) simulando la corriente entrando
-             y: isOn ? 0 : 0
+             rotate: isOn ? [0, 2, -2, 0] : 0, 
           }}
           transition={{ type: "spring", stiffness: 400, damping: 10 }}
         >
-           {/* El Vidrio y el Brillo */}
            <div className={`bulb-glass ${isOn ? 'glow' : 'dim'}`}>
               <Lightbulb 
                 size={110} 
@@ -53,19 +50,22 @@ function App() {
            </div>
         </motion.div>
 
-        {/* Cordón Físico Arrastrable (Pull Cord / Gancho) */}
+        {/* Zona del Cordón */}
         <div className="cord-container">
+           {/* Soga física Verlet rendering loop (dibuja la cuerda hasta el gancho) */}
+           <VerletRope x={dragX} y={dragY} length={240} />
+
+           {/* Gancho controlador (La mano del usuario lo agarra aquí) */}
            <motion.div 
              className="pull-cord"
-             drag="y"
-             dragConstraints={{ top: 0, bottom: 0 }} /* Siempre forzamos a que el origen magnético sea arriba para que "rebote" si lo sueltas */
-             dragElastic={{ top: 0, bottom: 0.6 }} /* Resistencia asimétrica: pesado hacia abajo, no sube más allá de su tope. */
+             style={{ x: dragX, y: dragY }}
+             drag // Permite simular un péndulo completo al arrastrar de lado a lado
+             dragConstraints={{ top: 0, bottom: 0, left: 0, right: 0 }} 
+             dragElastic={{ top: 0, bottom: 0.6, left: 0.1, right: 0.1 }}
              onDragEnd={handleDragEnd}
-             whileHover={{ cursor: "grab" }}
-             whileTap={{ cursor: "grabbing" }}
-             whileDrag={{ scaleY: 1.05 }} /* Simula que el cordón de caucho se estira */
+             whileHover={{ cursor: "grab", scale: 1.05 }}
+             whileTap={{ cursor: "grabbing", scale: 0.95 }}
            >
-             <div className="string"></div>
              <div className="handle"></div>
            </motion.div>
         </div>
@@ -77,7 +77,7 @@ function App() {
         transition={{ type: 'spring', stiffness: 100, damping: 20 }}
       >
          <h1>{isOn ? 'Encendido' : 'Apagado'}</h1>
-         <p>Jala el gancho rojo hacia abajo</p>
+         <p>Juega o tira del gancho para controlar la luz</p>
       </motion.div>
 
     </div>
