@@ -7,27 +7,20 @@ function App() {
   const [isOn, setIsOn] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
 
-  // Toggle Function simulating connection to real IoT hardware
   const toggleDevice = async () => {
+    if (isConnecting) return;
     setIsConnecting(true);
     
-    // Aquí puedes reemplazar con tu endpoint para Render o HW local:
-    // try {
-    //   await fetch('https://tudominio.onrender.com/api/toggle', { 
-    //     method: 'POST', 
-    //     headers: { 'Content-Type': 'application/json' },
-    //     body: JSON.stringify({ power: !isOn }) 
-    //   });
-    // } catch (e) {
-    //   console.error("Error al conectar con foco", e);
-    // }
-    
-    // Simulate network delay
+    // Simular el retraso físico/hardware
     setTimeout(() => {
       setIsOn(!isOn);
       setIsConnecting(false);
-    }, 600);
+    }, 450);
   };
+
+  // Físicas tipo "Vercel" (Spring animations)
+  const springConfig = { type: "spring", stiffness: 400, damping: 25, mass: 1 };
+  const hardwareSpring = { type: "spring", stiffness: 500, damping: 15, mass: 0.5 };
 
   return (
     <div className={`app-container ${isOn ? 'on' : 'off'}`}>
@@ -37,11 +30,15 @@ function App() {
         className="glass-panel"
         initial={{ y: 50, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
-        transition={{ duration: 0.8, ease: 'easeOut' }}
+        transition={{ type: "spring", stiffness: 300, damping: 20 }}
       >
         <motion.div 
-          animate={{ scale: isOn ? 1.2 : 1 }} 
-          transition={{ duration: 0.5 }}
+          animate={{ 
+            scale: isOn ? 1.2 : 1, 
+            y: isOn ? -10 : 0,
+            rotate: isOn ? [0, 10, -10, 0] : 0 // Ligero temblor físico al prender
+          }} 
+          transition={springConfig}
         >
           {isOn ? (
             <Lightbulb size={64} className="icon-on" strokeWidth={1.5} />
@@ -50,48 +47,58 @@ function App() {
           )}
         </motion.div>
 
-        <div>
-           <h1>{isOn ? 'Encendido' : 'Apagado'}</h1>
-           <p className="subtitle">Módulo de Iluminación IoT</p>
+        <div className="text-container">
+           <motion.h1 layout transition={springConfig}>
+             {isOn ? 'Encendido' : 'Apagado'}
+           </motion.h1>
+           <motion.p layout className="subtitle" transition={springConfig}>
+             Control Inteligente con Físicas
+           </motion.p>
         </div>
 
-        <motion.button
-          className={`power-button ${isOn ? 'on' : 'off'}`}
+        {/* Vercel-style Physical Toggle Switch */}
+        <div 
+          className={`vercel-switch-track ${isOn ? 'on' : 'off'} ${isConnecting ? 'loading' : ''}`}
           onClick={toggleDevice}
-          disabled={isConnecting}
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          aria-label="Power Button"
         >
-          <AnimatePresence mode="wait">
-            {isConnecting ? (
-              <motion.div
-                key="loading"
-                initial={{ opacity: 0, rotate: -90 }}
-                animate={{ opacity: 1, rotate: 360 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-                style={{ display: 'flex' }}
-              >
-                <div className="spinner" />
-              </motion.div>
-            ) : (
-              <motion.div
-                key="power"
-                initial={{ opacity: 0, scale: 0.5 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.5 }}
-                style={{ display: 'flex' }}
-              >
-                <Power size={52} strokeWidth={2} className={isOn ? 'icon-on' : 'icon-off'} />
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </motion.button>
+          <motion.div
+            className="vercel-switch-thumb"
+            layout /* Layout prop automáticamente aplica físicas de resorte (spring) */
+            transition={hardwareSpring}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.9, width: "60px" }} /* Se aplasta físicamente al presionarlo antes de soltar */
+          >
+            <AnimatePresence mode="popLayout">
+              {isConnecting ? (
+                <motion.div
+                  key="loading"
+                  initial={{ opacity: 0, scale: 0.5 }}
+                  animate={{ opacity: 1, scale: 1, rotate: 360 }}
+                  exit={{ opacity: 0, scale: 0.5 }}
+                  transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+                  className="icon-wrapper"
+                >
+                  <div className="spinner-small" />
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="icon"
+                  initial={{ opacity: 0, scale: 0.2 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.2 }}
+                  transition={hardwareSpring}
+                  className="icon-wrapper"
+                >
+                  <Power size={24} strokeWidth={2.5} className={isOn ? 'icon-thumb-on' : 'icon-thumb-off'} />
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </motion.div>
+        </div>
         
-        <p className="hint">
-          {isConnecting ? 'Enviando señal...' : 'Toca para cambiar de estado'}
-        </p>
+        <motion.p layout transition={springConfig} className="hint">
+          {isConnecting ? 'Aplicando fuerza...' : 'Alternar interruptor'}
+        </motion.p>
 
       </motion.div>
     </div>
