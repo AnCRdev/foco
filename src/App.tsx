@@ -18,7 +18,7 @@ function App() {
     }, 200);
   };
 
-  const handleDragEnd = (event: any, info: any) => {
+  const handleDragEnd = (_event: any, info: any) => {
     // Si el usuario jaló la cuerda más de 60 pixeles hacia abajo:
     if (info.offset.y > 60) {
       toggleDevice();
