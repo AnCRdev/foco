@@ -1,106 +1,85 @@
 import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Power, Lightbulb } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { Lightbulb } from 'lucide-react';
 import './index.css';
 
 function App() {
   const [isOn, setIsOn] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
 
+  // Activador físico que se llama cuando soltamos el cordón y baja más allá de cierto límite.
   const toggleDevice = async () => {
     if (isConnecting) return;
     setIsConnecting(true);
     
-    // Simular el retraso físico/hardware
     setTimeout(() => {
-      setIsOn(!isOn);
+      setIsOn(prev => !prev);
       setIsConnecting(false);
-    }, 450);
+    }, 200);
   };
 
-  // Físicas tipo "Vercel" (Spring animations)
-  const springConfig = { type: "spring", stiffness: 400, damping: 25, mass: 1 } as const;
-  const hardwareSpring = { type: "spring", stiffness: 500, damping: 15, mass: 0.5 } as const;
+  const handleDragEnd = (event: any, info: any) => {
+    // Si el usuario jaló la cuerda más de 60 pixeles hacia abajo:
+    if (info.offset.y > 60) {
+      toggleDevice();
+    }
+  };
 
   return (
     <div className={`app-container ${isOn ? 'on' : 'off'}`}>
+      {/* Luz ambiente radiante volumétrica */}
       <div className="ambient-glow" />
       
-      <motion.div 
-        className="glass-panel"
-        initial={{ y: 50, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ type: "spring", stiffness: 300, damping: 20 }}
-      >
+      {/* SISTEMA COLGANTE */}
+      <div className="hanging-system">
+        
+        {/* Contenedor del Foco Realista */}
         <motion.div 
-          animate={{ 
-            scale: isOn ? 1.2 : 1, 
-            y: isOn ? -10 : 0,
-            rotate: isOn ? [0, 10, -10, 0] : 0 // Ligero temblor físico al prender
-          }} 
-          transition={springConfig}
+          className="bulb-container"
+          animate={{
+             rotate: isOn ? [0, 2, -2, 0] : 0, // Pequeño temblor (chispa de poder) simulando la corriente entrando
+             y: isOn ? 0 : 0
+          }}
+          transition={{ type: "spring", stiffness: 400, damping: 10 }}
         >
-          {isOn ? (
-            <Lightbulb size={64} className="icon-on" strokeWidth={1.5} />
-          ) : (
-            <Lightbulb size={64} className="icon-off" strokeWidth={1.5} />
-          )}
+           {/* El Vidrio y el Brillo */}
+           <div className={`bulb-glass ${isOn ? 'glow' : 'dim'}`}>
+              <Lightbulb 
+                size={110} 
+                strokeWidth={1} 
+                color={isOn ? "#fef08a" : "#4b5563"} 
+                fill={isOn ? "rgba(253, 224, 71, 0.4)" : "transparent"}
+              />
+           </div>
         </motion.div>
 
-        <div className="text-container">
-           <motion.h1 layout transition={springConfig}>
-             {isOn ? 'Encendido' : 'Apagado'}
-           </motion.h1>
-           <motion.p layout className="subtitle" transition={springConfig}>
-             Control Inteligente con Físicas
-           </motion.p>
+        {/* Cordón Físico Arrastrable (Pull Cord / Gancho) */}
+        <div className="cord-container">
+           <motion.div 
+             className="pull-cord"
+             drag="y"
+             dragConstraints={{ top: 0, bottom: 0 }} /* Siempre forzamos a que el origen magnético sea arriba para que "rebote" si lo sueltas */
+             dragElastic={{ top: 0, bottom: 0.6 }} /* Resistencia asimétrica: pesado hacia abajo, no sube más allá de su tope. */
+             onDragEnd={handleDragEnd}
+             whileHover={{ cursor: "grab" }}
+             whileTap={{ cursor: "grabbing" }}
+             whileDrag={{ scaleY: 1.05 }} /* Simula que el cordón de caucho se estira */
+           >
+             <div className="string"></div>
+             <div className="handle"></div>
+           </motion.div>
         </div>
+      </div>
 
-        {/* Vercel-style Physical Toggle Switch */}
-        <div 
-          className={`vercel-switch-track ${isOn ? 'on' : 'off'} ${isConnecting ? 'loading' : ''}`}
-          onClick={toggleDevice}
-        >
-          <motion.div
-            className="vercel-switch-thumb"
-            layout /* Layout prop automáticamente aplica físicas de resorte (spring) */
-            transition={hardwareSpring}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.9, width: "60px" }} /* Se aplasta físicamente al presionarlo antes de soltar */
-          >
-            <AnimatePresence mode="popLayout">
-              {isConnecting ? (
-                <motion.div
-                  key="loading"
-                  initial={{ opacity: 0, scale: 0.5 }}
-                  animate={{ opacity: 1, scale: 1, rotate: 360 }}
-                  exit={{ opacity: 0, scale: 0.5 }}
-                  transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-                  className="icon-wrapper"
-                >
-                  <div className="spinner-small" />
-                </motion.div>
-              ) : (
-                <motion.div
-                  key="icon"
-                  initial={{ opacity: 0, scale: 0.2 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.2 }}
-                  transition={hardwareSpring}
-                  className="icon-wrapper"
-                >
-                  <Power size={24} strokeWidth={2.5} className={isOn ? 'icon-thumb-on' : 'icon-thumb-off'} />
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </motion.div>
-        </div>
-        
-        <motion.p layout transition={springConfig} className="hint">
-          {isConnecting ? 'Aplicando fuerza...' : 'Alternar interruptor'}
-        </motion.p>
-
+      <motion.div 
+        className="instructions"
+        animate={{ y: isOn ? 0 : -5 }}
+        transition={{ type: 'spring', stiffness: 100, damping: 20 }}
+      >
+         <h1>{isOn ? 'Encendido' : 'Apagado'}</h1>
+         <p>Jala el gancho rojo hacia abajo</p>
       </motion.div>
+
     </div>
   );
 }
