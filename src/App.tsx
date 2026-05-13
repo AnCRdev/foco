@@ -12,13 +12,23 @@ function App() {
   const dragX = useMotionValue(0);
   const dragY = useMotionValue(0);
 
+  const BACKEND_URL = import.meta.env.VITE_BACKEND_URL ?? 'http://localhost:8000';
+
   const toggleDevice = async () => {
     if (isConnecting) return;
     setIsConnecting(true);
-    setTimeout(() => {
+    try {
+      const res = await fetch(`${BACKEND_URL}/api/toggle`, { method: 'POST' });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      setIsOn(data.state);
+    } catch (err) {
+      console.error('Error al contactar el ESP32:', err);
+      // Fallback visual si el backend no está disponible
       setIsOn(prev => !prev);
+    } finally {
       setIsConnecting(false);
-    }, 200);
+    }
   };
 
   const handleDragEnd = (_event: any, info: any) => {
