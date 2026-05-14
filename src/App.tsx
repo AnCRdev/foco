@@ -1,12 +1,22 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, useMotionValue } from 'framer-motion';
-import { Lightbulb } from 'lucide-react';
+import { Lightbulb, Mic, MicOff } from 'lucide-react';
 import VerletRope from './VerletRope';
 import './index.css';
+
+// TypeScript declarations for Web Speech API
+declare global {
+  interface Window {
+    SpeechRecognition: any;
+    webkitSpeechRecognition: any;
+  }
+}
 
 function App() {
   const [isOn, setIsOn] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
+  const [isListening, setIsListening] = useState(false);
+  const recognitionRef = useRef<any>(null);
 
   // Sensores de posición X,Y de alta velocidad que leen la mano del usuario para enviarlo a la soga matemática
   const dragX = useMotionValue(0);
@@ -37,10 +47,92 @@ function App() {
     }
   };
 
+  useEffect(() => {
+    // Configurar SpeechRecognition
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (SpeechRecognition) {
+      const recognition = new SpeechRecognition();
+      recognition.continuous = true;
+      recognition.interimResults = false;
+      recognition.lang = 'es-ES'; // Idioma español
+
+      recognition.onresult = (event: any) => {
+        const current = event.resultIndex;
+        const transcript = event.results[current][0].transcript.toLowerCase();
+        console.log("Comando escuchado:", transcript);
+
+        if (
+          transcript.includes('lumos') ||
+          transcript.includes('enciende') ||
+          transcript.includes('apaga') ||
+          transcript.includes('luz')
+        ) {
+          toggleDevice();
+        }
+      };
+
+      recognition.onerror = (event: any) => {
+        console.error('Error en SpeechRecognition:', event.error);
+        setIsListening(false);
+      };
+
+      recognition.onend = () => {
+        // Si sigue en modo listening pero se cortó, reactivar (o apagar el botón)
+        setIsListening(false);
+      };
+
+      recognitionRef.current = recognition;
+    } else {
+      console.warn("Tu navegador no soporta Web Speech API");
+    }
+    
+    return () => {
+      if (recognitionRef.current) {
+        recognitionRef.current.stop();
+      }
+    };
+  }, [isConnecting]); // Se vuelve a montar si isConnecting cambia para no colisionar
+
+  const toggleListening = () => {
+    if (!recognitionRef.current) {
+      alert("Tu navegador no soporta comandos de voz.");
+      return;
+    }
+
+    if (isListening) {
+      recognitionRef.current.stop();
+      setIsListening(false);
+    } else {
+      try {
+        recognitionRef.current.start();
+        setIsListening(true);
+      } catch (e) {
+        console.error("No se pudo iniciar el micrófono", e);
+      }
+    }
+  };
+
   return (
     <div className={`app-container ${isOn ? 'on' : 'off'}`}>
       <div className="ambient-glow" />
       
+      {/* Botón Flotante del Micrófono */}
+      <motion.button 
+        className={`mic-button ${isListening ? 'listening' : ''}`}
+        onClick={toggleListening}
+        whileHover={{ scale: 1.1 }}
+        whileTap={{ scale: 0.9 }}
+        title={isListening ? "Detener escucha" : "Control por Voz"}
+      >
+        {isListening ? <Mic size={28} color="#ffffff" /> : <MicOff size={28} color="#cbd5e1" />}
+      </motion.button>
+      
+      {isListening && (
+        <div className="voice-status">
+          Escuchando... Di "enciende", "apaga" o "lumos"
+        </div>
+      )}
+
       <div className="hanging-system">
         
         <motion.div 
@@ -87,7 +179,7 @@ function App() {
         transition={{ type: 'spring', stiffness: 100, damping: 20 }}
       >
          <h1>{isOn ? 'Encendido' : 'Apagado'}</h1>
-         <p>Juega o tira del gancho para controlar la luz</p>
+         <p>Juega, tira del gancho o usa tu voz para controlar la luz</p>
       </motion.div>
 
     </div>
