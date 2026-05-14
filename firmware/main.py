@@ -1,4 +1,5 @@
 import _thread
+_thread.stack_size(16384) # Aumentar stack a 16KB para evitar crash en SSL/TLS
 import urequests
 import time
 import math
